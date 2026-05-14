@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>С днём рождения! 🎂</title>
+    <!-- Google Fonts: Rubik Dirt + Caveat -->
+    <link href="https://fonts.googleapis.com/css2?family=Rubik+Dirt&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* для имитации открытки, но текст можно копировать если надо — уберём? оставлю для эстетики */
+        }
+
+        body {
+            background: #fff9f0;   /* тёплый светлый фон, как у бумаги */
+            font-family: 'Caveat', cursive;
+            overflow-x: hidden;
+        }
+
+        /* контейнер-открытка — центрируем, максимальная ширина для телефона */
+        .postcard {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #fffcf5;
+            box-shadow: 0 0 40px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        /* каждый блок */
+        .block {
+            padding: 0 20px;
+            margin-bottom: 64px;
+            position: relative;
+        }
+
+        /* заголовки Rubik Dirt */
+        .rubik-title {
+            font-family: 'Rubik Dirt', cursive;
+            font-size: 16px;      /* базовый 16px, но внутри блока может переопределяться для поворотов */
+            font-weight: normal;
+            letter-spacing: 0.5px;
+        }
+
+        /* текст Caveat */
+        .caveat-text {
+            font-family: 'Caveat', cursive;
+            font-size: 14px;
+            line-height: 1.3;
+        }
+
+        .small-caveat {
+            font-family: 'Caveat', cursive;
+            font-size: 8px;
+            line-height: 1.2;
+        }
+
+        /* ---- анимации появления при скролле ---- */
+        .fade-in-scroll {
+            opacity: 0;
+            transform: translateY(15px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .fade-in-scroll.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* для динозавра (появление справа) */
+        .dino-slide {
+            opacity: 0;
+            transform: translateX(40px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .dino-slide.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* для фото из тени — переключение изображений */
+        .shadow-photo-wrapper {
+            position: relative;
+            width: fit-content;
+        }
+        .shadow-img, .main-img {
+            transition: opacity 0.8s ease;
+            display: block;
+            max-width: 100%;
+        }
+        .main-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+        }
+        .shadow-photo-wrapper.visible .main-img {
+            opacity: 1;
+        }
+        .shadow-photo-wrapper.visible .shadow-img {
+            opacity: 0;
+        }
+
+        /* обезьянка выезжает снизу-справа */
+        .monkey-wrapper {
+            overflow: visible;
+            position: relative;
+        }
+        .monkey-slide {
+            transform: translate(80px, 80px);
+            opacity: 0;
+            transition: transform 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.5s ease;
+            display: inline-block;
+        }
+        .monkey-slide.visible {
+            transform: translate(0, 0);
+            opacity: 1;
+        }
+
+        /* стили для плашек */
+        .blue-plate {
+            background-color: #ADDCEC;
+            padding: 12px 16px;
+            border-radius: 24px;
+            width: fit-content;
+            max-width: 100%;
+        }
+        .yellow-plate {
+            background-color: #F5E595;
+            padding: 12px 16px;
+            border-radius: 24px;
+        }
+        .green-plate {
+            background-color: #D3F595;
+            padding: 12px 16px;
+            border-radius: 24px;
+        }
+        .pink-plate {
+            background-color: #E184B4;
+            opacity: 0.71;
+            padding: 12px 16px;
+            border-radius: 24px;
+        }
+        .beige-plate {
+            background-color: #EEC68B;
+            padding: 12px 16px;
+            border-radius: 24px;
+        }
+
+        /* для точного позиционирования относительных элементов */
+        .relative {
+            position: relative;
+        }
+
+        .inline-block {
+            display: inline-block;
+        }
+
+        /* флажки и колпак анимируются при загрузке */
+        .flag-left {
+            position: absolute;
+            left: -30px;
+            top: 20%;
+            transform: translateX(-100%);
+            animation: slideInLeft 0.8s ease forwards;
+            z-index: 2;
+        }
+        .flag-right {
+            position: absolute;
+            right: -30px;
+            top: 30%;
+            transform: translateX(100%);
+            animation: slideInRight 0.8s ease forwards;
+            z-index: 2;
+        }
+        .cap {
+            position: absolute;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100%);
+            animation: slideDownCap 0.9s ease forwards;
+            z-index: 5;
+        }
+
+        @keyframes slideInLeft {
+            to { transform: translateX(0); left: 10px; }
+        }
+        @keyframes slideInRight {
+            to { transform: translateX(0); right: 10px; }
+        }
+        @keyframes slideDownCap {
+            to { transform: translateX(-50%) translateY(0); top: 20px; }
+        }
+
+        /* регулировка поворотов текста */
+        .rotate-ratibor {
+            transform: rotate(28.11deg);
+            display: inline-block;
+            transform-origin: left center;
+        }
+        .rotate-zakhar {
+            transform: rotate(-8.12deg);
+            display: inline-block;
+        }
+        .rotate-otmenya {
+            transform: rotate(-8.12deg);
+            display: inline-block;
+        }
+        .sticky-two {
+            transform: rotate(-6.78deg) translateY(4px);
+            display: inline-block;
+        }
+
+        /* отступы, выравнивание */
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .flex-column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .mt-2 { margin-top: 8px; }
+        .mt-3 { margin-top: 12px; }
+        .mb-1 { margin-bottom: 4px; }
+        .text-center { text-align: center; }
+
+        /* картинки адаптивно */
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* блок 2 — скриншот позади усачей */
+        .block2-images {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+        .screenshot-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 0;
+            opacity: 0.6;
+        }
+        .usachi-front {
+            position: relative;
+            z-index: 2;
+            width: 70%;
+            margin: 0 auto;
+        }
+        /* динозавр справа при скролле */
+        .dino-wrapper {
+            text-align: right;
+            margin-top: 8px;
+        }
+        .dino-img {
+            width: 80px;
+            display: inline-block;
+        }
+
+        /* четвертый блок: силуэт -> фото */
+        .photo-reveal {
+            display: flex;
+            justify-content: center;
+            margin: 16px 0;
+        }
+        .shadow-photo-wrapper {
+            width: 70%;
+            margin: 0 auto;
+        }
+
+        /* пятый блок */
+        .quote-block {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 20px;
+            margin-top: 16px;
+        }
+        .rotia-block, .zakhar-block {
+            flex: 1;
+            min-width: 140px;
+        }
+        .plate-title {
+            font-family: 'Rubik Dirt', cursive;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        /* последний блок */
+        .last-block-content {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .cake-img {
+            width: 45%;
+        }
+        .monkey-wrapper {
+            width: 35%;
+            text-align: right;
+        }
+        .monkey-img {
+            width: 100%;
+        }
+        .candle-text {
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        /* подстройка под телефон */
+        @media (max-width: 480px) {
+            .block {
+                padding: 0 16px;
+            }
+            .quote-block {
+                flex-direction: column;
+            }
+            .last-block-content {
+                flex-direction: column;
+                align-items: center;
+            }
+            .cake-img, .monkey-wrapper {
+                width: 60%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="postcard">
+    <!-- БЛОК 1: Верхний с анимацией флажков, колпака, звезд -->
+    <div class="block" style="position: relative; min-height: 460px; margin-top: 20px;">
+        <!-- флажки слева и справа (используем одно изображение, но размножим) -->
+        <img src="флажки.png" class="flag-left" style="width: 70px;" alt="флажок">
+        <img src="флажки.png" class="flag-right" style="width: 70px; transform: scaleX(-1);" alt="флажок">
+        <!-- колпак -->
+        <img src="колпак.png" class="cap" style="width: 100px;" alt="колпак">
+
+        <!-- звезды и основные картинки -->
+        <div style="position: relative; text-align: center; padding-top: 60px;">
+            <img src="звезды у надписи слева.png" style="position: absolute; left: 0; top: 30px; width: 50px;" alt="звезда">
+            <img src="звезды у надписи справа.png" style="position: absolute; right: 0; top: 30px; width: 50px;" alt="звезда">
+
+            <img src="с Днем рождения.png" style="width: 80%; margin: 0 auto;" alt="с днем рождения">
+            <div style="margin-top: -30px;">
+                <img src="именинник.png" style="width: 70%;" alt="именинник">
+            </div>
+            <div style="font-family: 'Rubik Dirt', cursive; font-size: 28px; margin-top: 8px; display: flex; align-items: baseline; justify-content: center; gap: 4px; flex-wrap: wrap;">
+                <span>Тебе уже</span>
+                <span style="color: #D95348;">2</span>
+                <span class="sticky-two" style="color: #85B3B0;">8</span>
+                <span style="color: #D95348;">!</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- БЛОК 2: Как хорошо что мы нашлись -->
+    <div class="block fade-in-scroll" id="block2">
+        <div class="rubik-title" style="color: #EAD778; font-size: 16px; margin-bottom: 8px;">Как хорошо, что мы нашлись!</div>
+        <div class="block2-images">
+            <img src="скриншот блок 1.png" class="screenshot-bg" style="width: 95%;" alt="фон">
+            <img src="усачи.png" class="usachi-front" alt="усачи">
+        </div>
+        <div class="blue-plate caveat-text" style="font-size: 14px; margin: 10px 0;">
+            Несмотря на то, что ты свел меня с ума<br>раньше времени я этому очень рада, моя Дименция
+        </div>
+        <div class="small-caveat" style="color: #3a3a3a;">
+            очень сильно рада что мы все таки встретились в Питере и у нас все сложилось. Не знаю как ты, а я полюбила тебя еще задолго до встречи
+        </div>
+        <div class="small-caveat" style="color: #9E4940; margin-top: 12px;">Мы с тобой так похожи</div>
+        <!-- динозавр появляется при скролле блока -->
+        <div class="dino-wrapper dino-slide" id="dinoWrapper">
+            <img src="Динозавр.png" class="dino-img" alt="динозавр">
+        </div>
+    </div>
+
+    <!-- БЛОК 3: Немного о тебе моими глазами -->
+    <div class="block fade-in-scroll">
+        <div class="flex-between" style="align-items: center;">
+            <div class="rubik-title" style="color: #B9DD93; font-size: 16px;">Немного о тебе моими глазами:</div>
+            <img src="братан.png" style="width: 50px;" alt="братан">
+        </div>
+        <div class="yellow-plate caveat-text" style="font-size: 14px; margin-top: 12px;">
+            Это так круто что у меня есть такой классный, веселый, заботливый, сильный, стойкий, мужественный мальчик Димка
+        </div>
+    </div>
+
+    <!-- БЛОК 4: Хочу пожелать тебе + фото из тени -->
+    <div class="block fade-in-scroll" id="block4">
+        <div class="rubik-title" style="color: #D95348; font-size: 16px;">Хочу пожелать тебе:</div>
+        <div class="flex-between" style="align-items: center; margin: 8px 0;">
+            <img src="попа динозавра.png" style="width: 70px;" alt="попа динозавра">
+            <div class="photo-reveal">
+                <div class="shadow-photo-wrapper" id="shadowReveal">
+                    <img src="из тени.png" class="shadow-img" style="width: 100%;" alt="силуэт">
+                    <img src="главный.png" class="main-img" style="width: 100%;" alt="главное фото">
+                </div>
+            </div>
+        </div>
+        <div class="green-plate caveat-text" style="font-size: 14px;">
+            В первую очередь ЗДОРОВЬЯ,<br>
+            легкости в достижении своих целей, чтобы все твои мечты сбывались,<br>
+            не забывай про своего внутреннего ребенка и иногда давай ему волю (а то сильно взрослым считаешь себя)
+        </div>
+        <div class="small-caveat mt-2">
+            *Ну остальное всякое: любовь там, счастье у тебя есть (надеюсь) так что не желаю (вдруг другую любовь и счастье найдешь)
+        </div>
+    </div>
+
+    <!-- БЛОК 5: Ротя и Захар -->
+    <div class="block fade-in-scroll">
+        <div class="quote-block">
+            <div class="rotia-block relative">
+                <div class="plate-title rotate-ratibor" style="color: #EEC68B; margin-left: 20px;">От Ратибора</div>
+                <div class="beige-plate caveat-text" style="font-size: 14px; margin-top: 10px;">
+                    “Я так сильно тебя люблю, что не хочу отходить от тебя даже на покакать”
+                </div>
+                <img src="ротя.png" style="width: 90%; margin-top: 10px;" alt="ротя">
+            </div>
+            <div class="zakhar-block relative">
+                <div class="plate-title rotate-zakhar" style="color: #94C7B9; text-align: right;">От Захара</div>
+                <div class="beige-plate caveat-text" style="background-color: #EEC68B; font-size: 14px; margin-top: 10px;">
+                    “Я так сильно скучаю по тебе, что когда ты приедешь, я отгрызу тебе ухо”
+                </div>
+                <img src="захар.png" style="width: 80%; margin-top: 10px; float: right;" alt="захар">
+            </div>
+        </div>
+    </div>
+
+    <!-- БЛОК 6: Финальный с обезьянкой и тортиком -->
+    <div class="block fade-in-scroll" id="block6">
+        <div class="relative" style="text-align: right;">
+            <div class="plate-title rotate-otmenya" style="color: #B9DD93; display: inline-block;">От меня:</div>
+        </div>
+        <div class="pink-plate caveat-text" style="font-size: 14px; margin: 8px 0;">
+            В общем, я тебя, мы тебя сильно любим, поздравляем с этим замечательным событием - с Днем Твоего Рождения! И мы очень рады что ты у нас есть!
+        </div>
+        <div class="last-block-content">
+            <img src="с тортиком.png" class="cake-img" alt="тортик">
+            <div class="monkey-wrapper">
+                <img src="обезьянка.png" class="monkey-slide monkey-img" id="monkeyImg" alt="обезьянка">
+            </div>
+        </div>
+        <div class="candle-text small-caveat">
+            Представь что этот тортик настоящий, загадай желание и задуй свечки!
+        </div>
+    </div>
+</div>
+
+<script>
+    // Intersection Observer для анимаций при скролле
+    const fadeElements = document.querySelectorAll('.fade-in-scroll');
+    const dinoElement = document.querySelector('.dino-slide');
+    const shadowWrapper = document.getElementById('shadowReveal');
+    const monkeyElement = document.getElementById('monkeyImg');
+
+    // Добавим также для обезьянки отдельный наблюдатель, чтобы срабатывало именно при показе блока 6
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                if (entry.target.classList.contains('dino-slide')) {
+                    entry.target.classList.add('visible');
+                } 
+                else if (entry.target.id === 'shadowReveal') {
+                    entry.target.classList.add('visible');
+                }
+                else if (entry.target.id === 'monkeyImg') {
+                    entry.target.classList.add('visible');
+                }
+                else {
+                    entry.target.classList.add('visible');
+                }
+                // Можно отключать наблюдение после появления, но оставим для надёжности
+            }
+        });
+    }, { threshold: 0.3 });
+
+    // Наблюдаем за fade-блоками
+    fadeElements.forEach(el => observer.observe(el));
+    if (dinoElement) observer.observe(dinoElement);
+    if (shadowWrapper) observer.observe(shadowWrapper);
+    if (monkeyElement) observer.observe(monkeyElement);
+
+    // Дополнительно: для блока2 динозавр видимость — наблюдаем именно его родительский блок? 
+    // но dinoElement уже отслеживается. Для верности убедимся, что он не в fade-in-scroll, это отдельный.
+    // Также для блока4 shadowWrapper — добавим, что когда фото проявляется, оно становится видимым.
+    // Для точности срабатывания при скролле до четвертого блока — наблюдатель на wrapper.
+
+    // Небольшой фикс, чтобы колпак и флажки не перекрывали контент на телефоне
+    window.addEventListener('load', () => {
+        // убедимся что все изображения подгружены
+        console.log('Открытка загружена');
+        // Если нужно предзагрузить флажки - они уже анимированы через CSS
+    });
+</script>
+</body>
+</html>
